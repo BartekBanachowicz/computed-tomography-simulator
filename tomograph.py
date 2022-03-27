@@ -4,6 +4,7 @@ from PIL import Image
 from skimage import draw
 from skimage import io
 
+import utilities
 from bresenham import line
 
 
@@ -44,7 +45,7 @@ class Tomograph:
 
             # TODO - test sum instead of avg
             scanResults.append(pixelsSum / len(pixels[0]))
-
+            # scanResults.append(pixelsSum)
         return scanResults
 
     def read_sinogram(self, sinogram, size):
@@ -54,11 +55,16 @@ class Tomograph:
         for i in range(self.numOfDetectors):
             # TODO - Use draw.line_nd instead of bresenham.line
             #  P.S. It impacts on most nested 'for' loop in make_result_image
-            pixels = line(math.floor(self.x), math.floor(self.y), math.floor(detectorsCoords[i][0]),
-                          math.floor(detectorsCoords[i][1]))
+
+            pixels = draw.line_nd((math.floor(self.x), math.floor(self.y)),
+                                  (math.floor(detectorsCoords[i][0]), math.floor(detectorsCoords[i][1])))
+
+            # pixels = line(math.floor(self.x), math.floor(self.y), math.floor(detectorsCoords[i][0]),
+            #               math.floor(detectorsCoords[i][1]))
             resultPixels.append(pixels)
 
         iteration = int(self.progressAngle / self.stepAngle)
+        print("Iteracja: ", iteration)
         resultValues = sinogram[iteration]
 
         return resultPixels, resultValues
@@ -70,29 +76,51 @@ def make_sinogram(image, tomograph):
         sinogram.append(tomograph.scan(image, tomograph.radius * 2))
         tomograph.next_iteration()
 
-    io.imshow(np.array(sinogram, dtype=np.uint8), cmap='gray')
+    # print(sinogram)
+    # sinogram = utilities.normalize_sinogram(sinogram)
+    # for i in range(len(sinogram)):
+    #     for j in range(len(sinogram[i])):
+    #         if sinogram[i][j] > 255:
+    #             print("Ping")
+    io.imshow(np.array(sinogram, dtype=np.uint32), cmap='gray')
     io.show()
+
+    # image = Image.fromarray(np.array(sinogram))
+    # image.show()
 
     return sinogram
 
 
 def make_result_image(sinogram, tomograph, radius):
-    result_image = np.zeros((radius * 2, radius * 2), dtype=np.uint8)
+    result_image = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     tomograph.progressAngle = 0
 
     while tomograph.progressAngle <= 360:
         pixels, values = tomograph.read_sinogram(sinogram, radius * 2)
         for i in range(tomograph.numOfDetectors):
             # TODO - It needs to be changed if read_sinogram changed
-            for j in range(len(pixels[i])):
-                result_value = result_image[pixels[i][j][0]][pixels[i][j][1]] + values[i]
-                result_image[pixels[i][j][0]][pixels[i][j][1]] = result_value
-                if result_value >= 255.0:
-                    result_image[pixels[i][j][0]][pixels[i][j][1]] = 255
-                else:
-                    result_image[pixels[i][j][0]][pixels[i][j][1]] = result_value
+
+            # for j in range(len(pixels[i])):
+            #     result_value = result_image[pixels[i][j][0]][pixels[i][j][1]] + values[i]
+            #     result_image[pixels[i][j][0]][pixels[i][j][1]] = result_value
+            #     if result_value >= 255.0:
+            #         result_image[pixels[i][j][0]][pixels[i][j][1]] = 255
+            #     else:
+            #         result_image[pixels[i][j][0]][pixels[i][j][1]] = result_value
+
+            for j in range(len(pixels[i][0])):
+                temp = result_image[pixels[i][0][j]][pixels[i][1][j]] + values[i]
+                result_image[pixels[i][0][j]][pixels[i][1][j]] = temp
+                # if temp > 255:
+                #     print("ping")
         tomograph.next_iteration()
+
+    result_image = utilities.normalize_image(result_image)
     print(np.min(result_image))
     print(np.max(result_image))
+
+    io.imshow(result_image, cmap='gray')
+    io.show()
+
     image = Image.fromarray(result_image)
     image.show()
