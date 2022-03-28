@@ -111,10 +111,7 @@ def read_image(image):
 
 
 def write_result(image, patient, filename):
-    meta = Dataset()
-    meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
-    meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
-    meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+
 
     ds = FileDataset(None, {}, preamble=b"\0" * 128)
     ds.file_meta = meta

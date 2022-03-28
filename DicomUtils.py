@@ -1,6 +1,7 @@
 import datetime
 
-from pydicom import dcmread
+import pydicom
+from pydicom import dcmread, Dataset, FileDataset
 
 
 class Patient:
@@ -23,6 +24,59 @@ class Dicom:
         return (pixels - pixels.min()) / (pixels.max() - pixels.min())
 
 
-def saveDicom(dicom):
+def createNewMetadata():
+    m = Dataset()
+    m.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
+    m.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+    m.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+    return m
+
+
+def createNewDicom(image_shape):
+    metadata = createNewMetadata()
+
+    ds = FileDataset(None, {}, preamble=b"\0" * 128)
+    ds.file_meta = metadata
+    ds.is_little_endian = True
+    ds.is_implicit_VR = False
+
+    ds.SOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
+    ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
+
+    ds.Modality = "CT"
+    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
+    ds.StudyInstanceUID = pydicom.uid.generate_uid()
+    ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
+
+    ds.BitsStored = 8
+    ds.BitsAllocated = 8
+    ds.SamplesPerPixel = 1
+    ds.HighBit = 7
+
+    ds.ImagesInAcquisition = 1
+    ds.InstanceNumber = 1
+
+    ds.Rows, ds.Columns = image_shape
+
+    ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
+
+    ds.PhotometricInterpretation = "MONOCHROME2"
+    ds.PixelRepresentation = 0
+
+    pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
+
+    return ds
+
+
+def saveDicom(inputFields, image, dicom=None):
     print("Saving dicom")
-    return None
+    if dicom is None:
+        print("No input dicom found, creating new")
+        dicom = createNewDicom(image.shape)
+    dicom.PixelData = image.tobytes()
+    dicom.PatientName = inputFields.patient_name
+    dicom.PatientID = inputFields.patient_id
+    dicom.StudyDate = str(inputFields.examination_date.year) + str(inputFields.examination_date.month) + str(
+        inputFields.examination_date.day)
+
+    dicom.save_as("test.dcm", write_like_original=False)

@@ -41,12 +41,12 @@ def handle_dicom_file(file, inputFieldsContainer):
     dicom = DicomUtils.Dicom(file)
     st.session_state.dicom = dicom
     st.session_state.image = dicom.image
-    InputFields(inputFieldsContainer, dicom)
+    return InputFields(inputFieldsContainer, dicom)
 
 
 def handle_image_file(inputFieldsContainer):
     st.session_state.image = Image.open(st.session_state.uploaded_file)
-    InputFields(inputFieldsContainer)
+    return InputFields(inputFieldsContainer)
 
 
 def handle_upload(inputFieldsContainer):
@@ -54,9 +54,9 @@ def handle_upload(inputFieldsContainer):
         file = st.session_state.uploaded_file
         file_extension = st.session_state.uploaded_file.name.split(".")[1]
         if file_extension in ALLOWED_IMAGE_FORMATS:
-            handle_image_file(inputFieldsContainer)
+            return handle_image_file(inputFieldsContainer)
         elif file_extension == DICOM_FORMAT:
-            handle_dicom_file(file, inputFieldsContainer)
+            return handle_dicom_file(file, inputFieldsContainer)
         else:
             print("Unexpected file format", file_extension)
 
@@ -77,6 +77,8 @@ def run_and_display(sinogram_container, tomograph_container, sliders):
     tomograph_image = tomograph_image.convert('RGB')
 
     tomograph_container.image(tomograph_image, width=350, clamp=True)
+
+    return sinogram_image, tomograph_image
 
 
 def init_session_state(previewContainer):
@@ -101,15 +103,19 @@ if __name__ == '__main__':
     init_session_state(previewColumn)
     sliders = Sliders()
 
-    handle_upload(inputColumn)
+    inputFields = handle_upload(inputColumn)
 
     resultContainer = st.container()
     sinogram, tomograph = resultContainer.columns(2)
 
-    dataToSave = False
     if st.sidebar.button("Run") and st.session_state.image is not None:
-        run_and_display(sinogram_container=sinogram, tomograph_container=tomograph, sliders=sliders)
-        dataToSave = True
+        st.session_state.sinogram_image, st.session_state.tomograph_image = run_and_display(sinogram, tomograph,
+                                                                                            sliders)
+        st.session_state.dataToSave = True
 
-    if dataToSave and st.sidebar.button("Export DICOM"):
-        DicomUtils.saveDicom(st.session_state.dicom)
+    if "dataToSave" in st.session_state and st.sidebar.button("Export DICOM"):
+        image = st.session_state.tomograph_image
+        if "dicom" in st.session_state:
+            DicomUtils.saveDicom(inputFields, image, st.session_state.dicom)
+        else:
+            DicomUtils.saveDicom(inputFields, image)
