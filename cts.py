@@ -26,7 +26,8 @@ if __name__ == '__main__':
 
     detectors_number = st.sidebar.slider('Number of detectors', 0, 300, 180)
     detection_angle = st.sidebar.slider('Detection angle [degrees]', 0, 360, 120)
-    step = st.sidebar.slider('Rotation per iteration [degrees]', 1, 30, 4)
+    step = st.sidebar.slider('Rotation per iteration [degrees]', 0.5, 30.0, 4.0)
+    boundary = st.sidebar.slider('Boundary angle [degrees]', 0, 360, 360)
 
     patients_id = col1.text_input("Patient's ID:", )
     patients_name = col1.text_input("Patient's name and surname:")
@@ -42,13 +43,13 @@ if __name__ == '__main__':
     if st.sidebar.button("Run") and st.session_state.image is not None:
         image_array, st.session_state['radius'] = utilities.read_image(st.session_state.image)
         tomograph = Tomograph(detectors_number, detection_angle, step, st.session_state.radius)
-        sinogram = make_sinogram(image_array, tomograph, 360)
+        sinogram = make_sinogram(image_array, tomograph, boundary)
 
         sinogram_to_display = Image.fromarray(np.array(sinogram))
         sinogram_to_display = sinogram_to_display.convert('RGB')
         col21.image(sinogram_to_display, width=350)
 
-        result_image = make_result_image(sinogram, tomograph, st.session_state.radius)
+        result_image = make_result_image(sinogram, tomograph, st.session_state.radius, boundary)
         result_image = Image.fromarray(result_image)
         result_image = result_image.convert('RGB')
-        col22.image(result_image, width=350)
+        col22.image(result_image, width=350, clamp=True)

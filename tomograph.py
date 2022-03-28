@@ -5,7 +5,6 @@ from skimage import draw
 from skimage import io
 
 import utilities
-from bresenham import line
 
 
 class Tomograph:
@@ -79,12 +78,12 @@ def make_sinogram(image, tomograph, boundary):
     return sinogram
 
 
-def make_result_image(sinogram, tomograph, radius):
+def make_result_image(sinogram, tomograph, radius, boundary):
     result_image = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     lines_per_pixel = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     tomograph.progressAngle = 0
 
-    while tomograph.progressAngle < 360:
+    while tomograph.progressAngle < boundary:
         pixels, values = tomograph.read_sinogram(sinogram, radius * 2)
         for i in range(tomograph.numOfDetectors):
             for j in range(len(pixels[i][0])):
@@ -92,6 +91,11 @@ def make_result_image(sinogram, tomograph, radius):
                 lines_per_pixel[pixels[i][0][j]][pixels[i][1][j]] += 1
 
         tomograph.next_iteration()
+
+    # for i in range(radius*2):
+    #     for j in range(radius*2):
+    #         if lines_per_pixel[i][j] != 0:
+    #             result_image[i][j] = result_image[i][j]/lines_per_pixel[i][j]
 
     result_image = utilities.normalize_image(result_image)
 

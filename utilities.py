@@ -21,6 +21,14 @@ def maksimum(tab):
                 local_maks = tab[i][j]
     return local_maks
 
+def minimum(tab):
+    local_min = 10000.0
+    for i in range(len(tab)):
+        for j in range(len(tab[i])):
+            if tab[i][j] < local_min:
+                local_min = tab[i][j]
+    return local_min
+
 
 def normalize_sinogram(sinogram):
     # maxVal = max(max(sinogram))
@@ -70,6 +78,9 @@ def normalize_image(image):
         for j in range(len(image[i])):
             if image[i][j] > 255:
                 print("Ping")
+
+    print("Global min: ", minimum(image))
+    print("Global max: ", maksimum(image))
 
     return image
 
