@@ -1,12 +1,11 @@
+import datetime
 import math
 
 import numpy as np
 import pydicom._storage_sopclass_uids
-import matplotlib as mt
-from PIL import Image
-from pydicom import Dataset, FileDataset
+from pydicom import dcmread
+from pydicom.pixel_data_handlers.pillow_handler import *
 from skimage.color import rgb2gray
-from skimage.io import imread
 
 
 def normalize_oy(y, size):
@@ -134,7 +133,7 @@ def write_result(image, patient, filename):
     ds.ImagesInAcquisition = 1
     ds.InstanceNumber = 1
 
-    ds.Rows, ds.Columns = img_converted.shape
+    ds.Rows, ds.Columns = image.shape
 
     ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
 
@@ -146,3 +145,31 @@ def write_result(image, patient, filename):
     ds.PixelData = image.tobytes()
 
     ds.save_as(filename, write_like_original=False)
+
+
+class Patient:
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+
+class Dicom:
+    def __init__(self, patient, date, image):
+        self.patient = patient
+        self.study_date = datetime.date(int(date[0:4]), int(date[4:6]), int(date[6:]))
+        self.image = image
+
+
+def extract_dicom_data(input_file):
+    ds = dcmread(input_file)
+    print(ds.PatientID)
+    image = extract_dicom_image(ds)
+    patient = Patient(ds.PatientID, ds.PatientName)
+    dicom = Dicom(patient, ds.StudyDate, image)
+    return dicom
+
+
+def extract_dicom_image(dicom_data):
+    print("extracting dicom image")
+    pixels = dicom_data.pixel_array
+    return (pixels - pixels.min()) / (pixels.max() - pixels.min())

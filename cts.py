@@ -1,11 +1,19 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
-from tomograph import Tomograph, make_result_image, make_sinogram
 from PIL import Image
+
 import utilities
-import time
-import math
+from tomograph import Tomograph, make_result_image, make_sinogram
+
+ALLOWED_IMAGE_FORMATS = {"jpeg", "png", "jpg", "dcm"},
+DICOM_FORMAT = "dcm"
+
+
+def handle_dicom_file(st, file):
+    dicom = utilities.extract_dicom_data(file)
+    st.session_state.image = dicom.image
+    st.session_state
+
 
 if __name__ == '__main__':
     st.title('Computed Tomography Simulator')
@@ -18,8 +26,15 @@ if __name__ == '__main__':
 
     st.session_state['uploaded_file'] = st.sidebar.file_uploader("Upload your file")
     if st.session_state.uploaded_file is not None:
-        print(st.session_state.uploaded_file.type)
-        st.session_state['image'] = Image.open(st.session_state.uploaded_file)
+        file = st.session_state.uploaded_file
+        print(file.type)
+        file_extension = st.session_state.uploaded_file.name.split(".")[1]
+        if file_extension in ALLOWED_IMAGE_FORMATS:
+            st.session_state['image'] = Image.open(st.session_state.uploaded_file)
+        elif file_extension == DICOM_FORMAT:
+            handle_dicom_file(st, file)
+        else:
+            print("Unexpected file format {}", file_extension)
 
     container1 = st.container()
     col1, col2 = container1.columns(2)
@@ -34,6 +49,7 @@ if __name__ == '__main__':
 
     if st.session_state.image is not None:
         col2.text("Imported image")
+        print(np.amax(st.session_state.image))
         col2.image(st.session_state.image)
 
     container2 = st.container()
