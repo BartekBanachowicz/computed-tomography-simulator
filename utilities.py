@@ -92,8 +92,8 @@ def resize_image(image, size):
     return image
 
 
-def read_image(path):
-    image = imread(path)
+def read_image(image):
+    image = np.asarray(image)
     h, w = (image.shape[0], image.shape[1])
     radius = math.ceil(math.sqrt(w ** 2 + h ** 2) / 2)
     print("H: ", h, " W: ", w, " Radius: ", radius)

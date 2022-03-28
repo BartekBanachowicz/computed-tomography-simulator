@@ -66,12 +66,25 @@ class Tomograph:
         return resultPixels, resultValues
 
 
+def make_sinogram(image, tomograph, boundary):
+    sinogram = []
+    while tomograph.progressAngle < boundary:
+        sinogram.append(tomograph.scan(image, tomograph.radius * 2))
+        tomograph.next_iteration()
+
+    sinogram = utilities.normalize_sinogram(sinogram)
+    io.imshow(np.array(sinogram, dtype=np.uint32), cmap='gray')
+    io.show()
+
+    return sinogram
+
+
 def make_result_image(sinogram, tomograph, radius):
     result_image = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     lines_per_pixel = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     tomograph.progressAngle = 0
 
-    while tomograph.progressAngle <= 360:
+    while tomograph.progressAngle < 360:
         pixels, values = tomograph.read_sinogram(sinogram, radius * 2)
         for i in range(tomograph.numOfDetectors):
             for j in range(len(pixels[i][0])):
@@ -81,11 +94,5 @@ def make_result_image(sinogram, tomograph, radius):
         tomograph.next_iteration()
 
     result_image = utilities.normalize_image(result_image)
-    print(np.min(result_image))
-    print(np.max(result_image))
 
-    io.imshow(result_image, cmap='gray')
-    io.show()
-
-    image = Image.fromarray(result_image)
-    image.show()
+    return result_image
