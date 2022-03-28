@@ -10,12 +10,6 @@ class Patient:
 
 
 class Dicom:
-
-    def fromFile(self, patient, date, image):
-        self.patient = patient
-        self.study_date = datetime.date(int(date[0:4]), int(date[4:6]), int(date[6:]))
-        self.image = image
-
     def __init__(self, input_file):
         ds = dcmread(input_file)
         self.image = self._extract_dicom_image(ds)
@@ -27,3 +21,8 @@ class Dicom:
         print("extracting dicom image")
         pixels = dicom_data.pixel_array
         return (pixels - pixels.min()) / (pixels.max() - pixels.min())
+
+
+def saveDicom(dicom):
+    print("Saving dicom")
+    return None

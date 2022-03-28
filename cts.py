@@ -39,6 +39,7 @@ class InputFields:
 
 def handle_dicom_file(file, inputFieldsContainer):
     dicom = DicomUtils.Dicom(file)
+    st.session_state.dicom = dicom
     st.session_state.image = dicom.image
     InputFields(inputFieldsContainer, dicom)
 
@@ -105,5 +106,10 @@ if __name__ == '__main__':
     resultContainer = st.container()
     sinogram, tomograph = resultContainer.columns(2)
 
+    dataToSave = False
     if st.sidebar.button("Run") and st.session_state.image is not None:
         run_and_display(sinogram_container=sinogram, tomograph_container=tomograph, sliders=sliders)
+        dataToSave = True
+
+    if dataToSave and st.sidebar.button("Export DICOM"):
+        DicomUtils.saveDicom(st.session_state.dicom)
