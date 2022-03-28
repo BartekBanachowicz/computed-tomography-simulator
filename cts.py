@@ -117,5 +117,6 @@ if __name__ == '__main__':
         image = st.session_state.tomograph_image
         if "dicom" in st.session_state:
             DicomUtils.saveDicom(inputFields, image, st.session_state.dicom)
+            st.session_state.dicom = None
         else:
             DicomUtils.saveDicom(inputFields, image)
