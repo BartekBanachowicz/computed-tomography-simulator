@@ -24,6 +24,12 @@ class InputFields:
         self.examination_date = container.date_input("Examination date:")
 
 
+class GUI:
+    def __init__(self, patientDataContainer):
+        self.patientData = InputFields(patientDataContainer)
+        self.sliders = Sliders()
+
+
 def handle_dicom_file(file):
     dicom = utilities.extract_dicom_data(file)
     st.session_state.image = dicom.image
@@ -86,8 +92,7 @@ if __name__ == '__main__':
 
     init_session_state(previewColumn)
 
-    sliders = Sliders()
-    inputs = InputFields(inputColumn)
+    gui = GUI(inputColumn)
 
     resultContainer = st.container()
     sinogram, tomograph = resultContainer.columns(2)
