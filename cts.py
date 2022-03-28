@@ -14,6 +14,7 @@ class Sliders:
         self.detectors_number = st.sidebar.slider('Number of detectors', 0, 300, 180)
         self.detection_angle = st.sidebar.slider('Detection angle [degrees]', 0, 360, 120)
         self.step = st.sidebar.slider('Rotation per iteration [degrees]', 1, 30, 4)
+        self.boundary = st.sidebar.slider('Boundary angle [degrees]', 0, 360, 360)
 
 
 def handle_dicom_file(st, file):
@@ -33,8 +34,8 @@ if __name__ == '__main__':
     st.session_state['uploaded_file'] = st.sidebar.file_uploader("Upload your file")
     if st.session_state.uploaded_file is not None:
         file = st.session_state.uploaded_file
-        print(file.type)
         file_extension = st.session_state.uploaded_file.name.split(".")[1]
+
         if file_extension in ALLOWED_IMAGE_FORMATS:
             st.session_state['image'] = Image.open(st.session_state.uploaded_file)
         elif file_extension == DICOM_FORMAT:
@@ -54,7 +55,6 @@ if __name__ == '__main__':
 
     if st.session_state.image is not None:
         col2.text("Imported image")
-        print(np.amax(st.session_state.image))
         col2.image(st.session_state.image)
 
     container2 = st.container()
@@ -62,14 +62,15 @@ if __name__ == '__main__':
 
     if st.sidebar.button("Run") and st.session_state.image is not None:
         image_array, st.session_state['radius'] = utilities.read_image(st.session_state.image)
+
         tomograph = Tomograph(sliders.detectors_number, sliders.detection_angle, sliders.step, st.session_state.radius)
-        sinogram = make_sinogram(image_array, tomograph, 360)
+        sinogram = make_sinogram(image_array, tomograph, sliders.boundary)
 
         sinogram_to_display = Image.fromarray(np.array(sinogram))
         sinogram_to_display = sinogram_to_display.convert('RGB')
         col21.image(sinogram_to_display, width=350)
 
-        result_image = make_result_image(sinogram, tomograph, st.session_state.radius)
+        result_image = make_result_image(sinogram, tomograph, st.session_state.radius, boundary)
         result_image = Image.fromarray(result_image)
         result_image = result_image.convert('RGB')
-        col22.image(result_image, width=350)
+        col22.image(result_image, width=350, clamp=True)
