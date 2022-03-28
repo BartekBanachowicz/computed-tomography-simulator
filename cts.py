@@ -9,10 +9,16 @@ ALLOWED_IMAGE_FORMATS = {"jpeg", "png", "jpg", "dcm"},
 DICOM_FORMAT = "dcm"
 
 
+class Sliders:
+    def __init__(self):
+        self.detectors_number = st.sidebar.slider('Number of detectors', 0, 300, 180)
+        self.detection_angle = st.sidebar.slider('Detection angle [degrees]', 0, 360, 120)
+        self.step = st.sidebar.slider('Rotation per iteration [degrees]', 1, 30, 4)
+
+
 def handle_dicom_file(st, file):
     dicom = utilities.extract_dicom_data(file)
     st.session_state.image = dicom.image
-    st.session_state
 
 
 if __name__ == '__main__':
@@ -39,9 +45,8 @@ if __name__ == '__main__':
     container1 = st.container()
     col1, col2 = container1.columns(2)
 
-    detectors_number = st.sidebar.slider('Number of detectors', 0, 300, 180)
-    detection_angle = st.sidebar.slider('Detection angle [degrees]', 0, 360, 120)
-    step = st.sidebar.slider('Rotation per iteration [degrees]', 1, 30, 4)
+    sliders = Sliders()
+
 
     patients_id = col1.text_input("Patient's ID:", )
     patients_name = col1.text_input("Patient's name and surname:")
@@ -57,7 +62,7 @@ if __name__ == '__main__':
 
     if st.sidebar.button("Run") and st.session_state.image is not None:
         image_array, st.session_state['radius'] = utilities.read_image(st.session_state.image)
-        tomograph = Tomograph(detectors_number, detection_angle, step, st.session_state.radius)
+        tomograph = Tomograph(sliders.detectors_number, sliders.detection_angle, sliders.step, st.session_state.radius)
         sinogram = make_sinogram(image_array, tomograph, 360)
 
         sinogram_to_display = Image.fromarray(np.array(sinogram))
