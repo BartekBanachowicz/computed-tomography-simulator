@@ -77,7 +77,8 @@ def make_sinogram(image, tomograph):
         tomograph.next_iteration()
 
     # print(sinogram)
-    # sinogram = utilities.normalize_sinogram(sinogram)
+    sinogram = utilities.normalize_sinogram(sinogram)
+    # sinogram = utilities.normalize(sinogram)
     # for i in range(len(sinogram)):
     #     for j in range(len(sinogram[i])):
     #         if sinogram[i][j] > 255:
@@ -93,6 +94,7 @@ def make_sinogram(image, tomograph):
 
 def make_result_image(sinogram, tomograph, radius):
     result_image = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
+    lines_per_pixel = np.zeros((radius * 2, radius * 2), dtype=np.uint32)
     tomograph.progressAngle = 0
 
     while tomograph.progressAngle <= 360:
@@ -109,10 +111,9 @@ def make_result_image(sinogram, tomograph, radius):
             #         result_image[pixels[i][j][0]][pixels[i][j][1]] = result_value
 
             for j in range(len(pixels[i][0])):
-                temp = result_image[pixels[i][0][j]][pixels[i][1][j]] + values[i]
-                result_image[pixels[i][0][j]][pixels[i][1][j]] = temp
-                # if temp > 255:
-                #     print("ping")
+                result_image[pixels[i][0][j]][pixels[i][1][j]] += values[i]
+                lines_per_pixel[pixels[i][0][j]][pixels[i][1][j]] += 1
+
         tomograph.next_iteration()
 
     result_image = utilities.normalize_image(result_image)

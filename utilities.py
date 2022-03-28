@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import pydicom._storage_sopclass_uids
+import matplotlib as mt
 from PIL import Image
 from pydicom import Dataset, FileDataset
 from skimage.color import rgb2gray
@@ -16,7 +17,7 @@ def maksimum(tab):
     local_maks = -10000.0
     for i in range(len(tab)):
         for j in range(len(tab[i])):
-            if (tab[i][j] > local_maks):
+            if tab[i][j] > local_maks:
                 local_maks = tab[i][j]
     return local_maks
 
@@ -40,6 +41,22 @@ def normalize_sinogram(sinogram):
     #             print("Ping")
 
     return sinogram
+
+
+# def normalize(sinogram):
+#     max = 1
+#     min = 100
+#     for z in range(len(sinogram)):
+#         for i in sinogram[z]:
+#             if i > max:
+#                 max = i
+#             if i < min and i != 0:
+#                 min = i
+#     for z in range(len(sinogram)):
+#         for i in range(len(sinogram[z])):
+#             sinogram[z][i] = (sinogram[z][i] - min) / max
+#     print(max)
+#     return sinogram
 
 
 def normalize_image(image):
