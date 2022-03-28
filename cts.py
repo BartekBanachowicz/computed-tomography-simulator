@@ -3,9 +3,9 @@ import streamlit as st
 from PIL import Image
 
 import utilities
-from tomograph import Tomograph, make_result_image, make_sinogram
+from tomograph import Tomograph, make_result_image, make_sinogram, filter_sinogram, convolveSinogram
 
-ALLOWED_IMAGE_FORMATS = {"jpeg", "png", "jpg", "dcm"},
+ALLOWED_IMAGE_FORMATS = {"jpeg", "png", "jpg", "dcm"}
 DICOM_FORMAT = "dcm"
 
 
@@ -36,6 +36,8 @@ if __name__ == '__main__':
         file = st.session_state.uploaded_file
         file_extension = st.session_state.uploaded_file.name.split(".")[1]
 
+        print(st.session_state.uploaded_file.type)
+
         if file_extension in ALLOWED_IMAGE_FORMATS:
             st.session_state['image'] = Image.open(st.session_state.uploaded_file)
         elif file_extension == DICOM_FORMAT:
@@ -65,12 +67,17 @@ if __name__ == '__main__':
 
         tomograph = Tomograph(sliders.detectors_number, sliders.detection_angle, sliders.step, st.session_state.radius)
         sinogram = make_sinogram(image_array, tomograph, sliders.boundary)
+        # sinogram = utilities.normalize_sinogram(sinogram)
+        # sinogram = filter_sinogram(sinogram)
 
+        # print(sinogram[0])
+        # sinogram = convolveSinogram(sinogram)
+        sinogram = utilities.normalize_sinogram(sinogram)
         sinogram_to_display = Image.fromarray(np.array(sinogram))
         sinogram_to_display = sinogram_to_display.convert('RGB')
         col21.image(sinogram_to_display, width=350)
 
-        result_image = make_result_image(sinogram, tomograph, st.session_state.radius, boundary)
+        result_image = make_result_image(sinogram, tomograph, st.session_state.radius, sliders.boundary)
         result_image = Image.fromarray(result_image)
         result_image = result_image.convert('RGB')
         col22.image(result_image, width=350, clamp=True)

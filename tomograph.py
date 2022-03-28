@@ -71,11 +71,79 @@ def make_sinogram(image, tomograph, boundary):
         sinogram.append(tomograph.scan(image, tomograph.radius * 2))
         tomograph.next_iteration()
 
-    sinogram = utilities.normalize_sinogram(sinogram)
-    io.imshow(np.array(sinogram, dtype=np.uint32), cmap='gray')
-    io.show()
-
     return sinogram
+
+
+def filter_sinogram(sinogram):
+    np_sinogram = np.array(sinogram, dtype=np.uint32)
+    h = []
+    for i in range(-90, 90):
+        if i == 0:
+            h.append(1)
+        elif i % 2 == 0:
+            h.append(0)
+        elif i % 2 != 0:
+            temp = (-4.0 / math.pi ** 2) / (i ** 2)
+            h.append(temp)
+    # print("Kernel: ", h)
+
+    # new_sinogram = np.zeros((len(sinogram), len(sinogram[0])))
+    # for n in range(0, len(sinogram)):
+    #     for i in range(0, len(sinogram[n])):
+    #         for j in range(0, len(h)):
+    #             center = int(len(h) / 2)
+    #             k = j - center
+    #             if 0 < i + k < len(sinogram[n]):
+    #                 new_sinogram[n][i] += np.multiply(sinogram[n][i + k], h[j])
+    #
+    # for i in range(len(sinogram)):
+    #     for j in range(len(sinogram[i])):
+    #         if new_sinogram[i][j] < 0:
+    #             new_sinogram[i][j] = 0
+    #
+    # return np.asarray(new_sinogram)
+
+    for i in range(len(np_sinogram)):
+        np_sinogram[i] = np.convolve(np_sinogram[i, :], h, mode='same')
+        print("Linia: ", np_sinogram[i])
+
+    return np_sinogram
+
+
+def convolveSinogram(img, kernelSize=9):
+    width = len(img)
+    imgNew = []
+    for i in range(width):
+        imgNew.append([])
+        for j in range(width):
+            imgNew[i].append(0.0)
+
+    kernelCenter = (int)(kernelSize / 2)
+    kernel = []
+    for i in range(kernelSize):
+        if i == kernelCenter:
+            kernel.append(1.0)
+        elif i % 2 == 0:
+            kernel.append(0.0)
+        else:
+            kernel.append((-4 / pow(math.pi, 2)) / pow(i - kernelCenter, 2))
+
+    # print("kernel singoram convolve:")
+    # print(kernel)
+
+    width = len(img[0])
+    for i, row in enumerate(img):
+        j = kernelCenter
+        while j < (width - kernelCenter):
+            it = 0
+            k = j - kernelCenter
+            while it < kernelSize:
+                imgNew[i][j] += img[i][k] * kernel[it]
+                k += 1
+                it += 1
+            j += 1
+
+    return imgNew
 
 
 def make_result_image(sinogram, tomograph, radius, boundary):
