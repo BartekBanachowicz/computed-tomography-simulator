@@ -1,7 +1,10 @@
 import datetime
 
+import numpy as np
 import pydicom
 from pydicom import dcmread, Dataset, FileDataset
+from skimage import img_as_ubyte
+from skimage.exposure import rescale_intensity
 
 
 class Patient:
@@ -10,9 +13,10 @@ class Patient:
         self.name = name
 
 
-class Dicom:
+class DicomWrapper:
     def __init__(self, input_file):
         ds = dcmread(input_file)
+        self.originalDicom = ds
         self.image = self._extract_dicom_image(ds)
         self.patient = Patient(ds.PatientID, ds.PatientName)
         date = ds.StudyDate
@@ -68,15 +72,18 @@ def createNewDicom(image_shape):
     return ds
 
 
-def saveDicom(inputFields, image, dicom=None):
+def saveDicom(inputFields, inputImage, dicomWrapper=None):
+    image = img_as_ubyte(rescale_intensity(np.array(inputImage), out_range=(0.0, 1.0)))
     print("Saving dicom")
-    if dicom is None:
+    if dicomWrapper is None:
         print("No input dicom found, creating new")
         dicom = createNewDicom(image.shape)
-    dicom.PixelData = image.tobytes()
-    dicom.PatientName = inputFields.patient_name
-    dicom.PatientID = inputFields.patient_id
-    dicom.StudyDate = str(inputFields.examination_date.year) + str(inputFields.examination_date.month) + str(
-        inputFields.examination_date.day)
+    else:
+        dicom = dicomWrapper.originalDicom
+        dicom.PixelData = image.tobytes()
+        dicom.PatientName = inputFields.patient_name
+        dicom.PatientID = inputFields.patient_id
+        dicom.StudyDate = str(inputFields.examination_date.year) + str(inputFields.examination_date.month) + str(
+            inputFields.examination_date.day)
 
     dicom.save_as("test.dcm", write_like_original=False)

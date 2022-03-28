@@ -110,47 +110,6 @@ def read_image(image):
     return image, radius
 
 
-def write_result(image, patient, filename):
-
-
-    ds = FileDataset(None, {}, preamble=b"\0" * 128)
-    ds.file_meta = meta
-
-    ds.is_little_endian = True
-    ds.is_implicit_VR = False
-
-    ds.SOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
-    ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
-
-    ds.PatientName = patient["Name"]
-    ds.PatientID = patient["ID"]
-    ds.ImageComments = patient["Comments"]
-
-    ds.Modality = "CT"
-    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
-    ds.StudyInstanceUID = pydicom.uid.generate_uid()
-    ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
-
-    ds.BitsStored = 8
-    ds.BitsAllocated = 8
-    ds.SamplesPerPixel = 1
-    ds.HighBit = 7
-
-    ds.ImagesInAcquisition = 1
-    ds.InstanceNumber = 1
-
-    ds.Rows, ds.Columns = image.shape
-
-    ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
-
-    ds.PhotometricInterpretation = "MONOCHROME2"
-    ds.PixelRepresentation = 0
-
-    pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
-
-    ds.PixelData = image.tobytes()
-
-    ds.save_as(filename, write_like_original=False)
 
 
 

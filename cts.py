@@ -38,7 +38,7 @@ class InputFields:
 
 
 def handle_dicom_file(file, inputFieldsContainer):
-    dicom = DicomUtils.Dicom(file)
+    dicom = DicomUtils.DicomWrapper(file)
     st.session_state.dicom = dicom
     st.session_state.image = dicom.image
     return InputFields(inputFieldsContainer, dicom)
@@ -87,10 +87,6 @@ def init_session_state(previewContainer):
     if 'radius' not in st.session_state:
         st.session_state.radius = None
 
-    if st.session_state.image is not None:
-        previewContainer.text("Imported image")
-        previewContainer.image(st.session_state.image)
-
 
 if __name__ == '__main__':
     st.title('Computed Tomography Simulator')
@@ -104,6 +100,10 @@ if __name__ == '__main__':
     sliders = Sliders()
 
     inputFields = handle_upload(inputColumn)
+
+    if st.session_state.image is not None:
+        previewColumn.text("Imported image")
+        previewColumn.image(st.session_state.image)
 
     resultContainer = st.container()
     sinogram, tomograph = resultContainer.columns(2)
