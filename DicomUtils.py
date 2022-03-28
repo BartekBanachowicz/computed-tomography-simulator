@@ -45,7 +45,7 @@ def createNewDicom(image_shape):
     ds.is_implicit_VR = False
 
     ds.SOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
-    ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
+    ds.SOPInstanceUID = metadata.MediaStorageSOPInstanceUID
 
     ds.Modality = "CT"
     ds.SeriesInstanceUID = pydicom.uid.generate_uid()
@@ -85,5 +85,6 @@ def saveDicom(inputFields, inputImage, dicomWrapper=None):
         dicom.PatientID = inputFields.patient_id
         dicom.StudyDate = str(inputFields.examination_date.year) + str(inputFields.examination_date.month) + str(
             inputFields.examination_date.day)
+        dicom.file_meta = createNewMetadata()
 
     dicom.save_as("test.dcm", write_like_original=False)
