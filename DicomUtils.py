@@ -4,7 +4,6 @@ import numpy as np
 import pydicom
 from pydicom import dcmread, Dataset, FileDataset
 from skimage import img_as_ubyte
-from skimage.exposure import rescale_intensity
 
 
 class Patient:
@@ -60,7 +59,7 @@ def createNewDicom(image_shape):
     ds.ImagesInAcquisition = 1
     ds.InstanceNumber = 1
 
-    ds.Rows, ds.Columns = image_shape
+    ds.Rows, ds.Columns, _ = image_shape
 
     ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
 
@@ -72,19 +71,32 @@ def createNewDicom(image_shape):
     return ds
 
 
+def getFormattedDate(date):
+    return str(date.year) + fill_zeros(date.month) + str(date.day)
+
+
+def fill_zeros(date):
+    x = str(date)
+    if len(x) == 1:
+        return "0" + x
+    else:
+        return x
+
+
 def saveDicom(inputFields, inputImage, dicomWrapper=None):
-    image = img_as_ubyte(rescale_intensity(np.array(inputImage), out_range=(0.0, 1.0)))
+    image = img_as_ubyte(np.array(inputImage))
     print("Saving dicom")
     if dicomWrapper is None:
         print("No input dicom found, creating new")
         dicom = createNewDicom(image.shape)
     else:
         dicom = dicomWrapper.originalDicom
-        dicom.PixelData = image.tobytes()
-        dicom.PatientName = inputFields.patient_name
-        dicom.PatientID = inputFields.patient_id
-        dicom.StudyDate = str(inputFields.examination_date.year) + str(inputFields.examination_date.month) + str(
-            inputFields.examination_date.day)
         dicom.file_meta = createNewMetadata()
+
+    dicom.PixelData = image.tobytes()
+    dicom.PatientName = inputFields.patient_name
+    dicom.PatientID = inputFields.patient_id
+    dicom.StudyDate = getFormattedDate(inputFields.examination_date)
+    print(dicom.StudyDate)
 
     dicom.save_as("test.dcm", write_like_original=False)
