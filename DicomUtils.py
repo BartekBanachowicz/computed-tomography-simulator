@@ -1,10 +1,9 @@
 import datetime
 
+import imageio
 import numpy as np
 import pydicom
 from pydicom import dcmread, Dataset, FileDataset
-from skimage import img_as_ubyte
-from skimage.exposure import rescale_intensity
 
 
 class Patient:
@@ -55,13 +54,16 @@ def set_required_params(ds, image_shape, metadata):
     ds.SeriesInstanceUID = pydicom.uid.generate_uid()
     ds.StudyInstanceUID = pydicom.uid.generate_uid()
     ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
-    ds.BitsStored = 8
-    ds.BitsAllocated = 8
+    ds.BitsStored = 16
+    ds.BitsAllocated = 16
     ds.SamplesPerPixel = 1
-    ds.HighBit = 7
+    ds.HighBit = 15
     ds.ImagesInAcquisition = 1
     ds.InstanceNumber = 1
-    ds.Rows, ds.Columns, _ = image_shape
+    ds.SmallestImagePixelValue = b'\\x00\\x00'
+    ds.LargestImagePixelValue = b'\\xff\\xff'
+
+    ds.Columns, ds.Rows = image_shape
     print(image_shape)
     ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
     ds.PhotometricInterpretation = "MONOCHROME2"
@@ -81,8 +83,16 @@ def fill_zeros(date):
         return x
 
 
+def convert(inputImage):
+    inputImage.save("test123.jpg")
+    return imageio.imread("test123.jpg", pilmode="L")
+# todo?
+
 def saveDicom(inputFields, inputImage, dicomWrapper=None):
-    image = img_as_ubyte(rescale_intensity(np.array(inputImage), out_range=(0.0, 1.0)))
+    image = convert(inputImage)
+    if image.dtype != np.uint16:
+        image = image.astype(np.uint16)
+
     print("Saving dicom")
     if dicomWrapper is None:
         print("No input dicom found, creating new")
@@ -92,7 +102,7 @@ def saveDicom(inputFields, inputImage, dicomWrapper=None):
         dicom = dicomWrapper.originalDicom
         set_required_params(dicom, image.shape, createNewMetadata())
 
-    dicom.PixelData = image.tobytes()
+    dicom.PixelData = image.tostring()
     dicom.PatientName = inputFields.patient_name
     dicom.PatientID = inputFields.patient_id
     dicom.StudyDate = getFormattedDate(inputFields.examination_date)
