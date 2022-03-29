@@ -20,6 +20,7 @@ def maksimum(tab):
                 local_maks = tab[i][j]
     return local_maks
 
+
 def minimum(tab):
     local_min = 10000.0
     for i in range(len(tab)):
@@ -30,40 +31,14 @@ def minimum(tab):
 
 
 def normalize_sinogram(sinogram):
-    # maxVal = max(max(sinogram))
     maxVal = maksimum(sinogram)
     factor = 255.0 / maxVal
     for i in range(len(sinogram)):
         for j in range(len(sinogram[i])):
             temp = sinogram[i][j] * factor
-
-            if temp > 255:
-                print(temp)
-
             sinogram[i][j] = temp
 
-    # for i in range(len(sinogram)):
-    #     for j in range(len(sinogram[i])):
-    #         if sinogram[i][j] > 255:
-    #             print("Ping")
-
     return sinogram
-
-
-# def normalize(sinogram):
-#     max = 1
-#     min = 100
-#     for z in range(len(sinogram)):
-#         for i in sinogram[z]:
-#             if i > max:
-#                 max = i
-#             if i < min and i != 0:
-#                 min = i
-#     for z in range(len(sinogram)):
-#         for i in range(len(sinogram[z])):
-#             sinogram[z][i] = (sinogram[z][i] - min) / max
-#     print(max)
-#     return sinogram
 
 
 def normalize_image(image):
@@ -72,14 +47,6 @@ def normalize_image(image):
     for i in range(len(image)):
         for j in range(len(image[0])):
             image[i][j] = image[i][j] * factor
-
-    for i in range(len(image)):
-        for j in range(len(image[i])):
-            if image[i][j] > 255:
-                print("Ping")
-
-    print("Global min: ", minimum(image))
-    print("Global max: ", maksimum(image))
 
     return image
 
@@ -97,7 +64,6 @@ def resize_image(image, size):
     position = (math.floor(size / 2 - image.width / 2), math.floor(size / 2 - image.height / 2))
     background.paste(image, position)
     image = np.array(background)
-    # print(image.shape)
 
     return image
 

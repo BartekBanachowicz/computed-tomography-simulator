@@ -3,7 +3,7 @@ import streamlit as st
 from PIL import Image
 
 import utilities
-from tomograph import Tomograph, make_result_image, make_sinogram, filter_sinogram, convolveSinogram
+from tomograph import Tomograph, make_result_image, make_sinogram, filter_sinogram
 
 ALLOWED_IMAGE_FORMATS = {"jpeg", "png", "jpg", "dcm"}
 DICOM_FORMAT = "dcm"
@@ -70,13 +70,13 @@ if __name__ == '__main__':
         # sinogram = utilities.normalize_sinogram(sinogram)
         # sinogram = filter_sinogram(sinogram)
 
-        # print(sinogram[0])
         # sinogram = convolveSinogram(sinogram)
         sinogram = utilities.normalize_sinogram(sinogram)
         sinogram_to_display = Image.fromarray(np.array(sinogram))
         sinogram_to_display = sinogram_to_display.convert('RGB')
         col21.image(sinogram_to_display, width=350)
 
+        print("Creating result image")
         result_image = make_result_image(sinogram, tomograph, st.session_state.radius, sliders.boundary)
         result_image = Image.fromarray(result_image)
         result_image = result_image.convert('RGB')
