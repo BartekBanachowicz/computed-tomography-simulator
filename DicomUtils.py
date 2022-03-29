@@ -4,6 +4,7 @@ import imageio
 import numpy as np
 import pydicom
 from pydicom import dcmread, Dataset, FileDataset
+from PIL import Image
 
 
 class Patient:
@@ -17,10 +18,23 @@ class DicomWrapper:
         ds = dcmread(input_file)
         self.originalDicom = ds
         self.image = self._extract_dicom_image(ds)
-        self.patient = Patient(ds.PatientID, ds.PatientName)
+
+        self.patient = Patient(None, None)
+        if "PatientID" in ds:
+            self.patient.id = ds.PatientID
+        if "PatientName" in ds:
+            self.patient.name = ds.PatientName
+
         if "StudyDate" in ds:
             date = ds.StudyDate
             self.study_date = datetime.date(int(date[0:4]), int(date[4:6]), int(date[6:]))
+        else:
+            self.study_date = None
+
+        if "ImageComments" in ds:
+            self.image_comments = ds.ImageComments
+        else:
+            self.image_comments = None
 
     def _extract_dicom_image(self, dicom_data):
         print("extracting dicom image")
@@ -87,6 +101,8 @@ def fill_zeros(date):
 def convert(inputImage):
     inputImage.save("test123.jpg")
     return imageio.imread("test123.jpg", pilmode="L")
+
+
 # todo?
 
 def saveDicom(inputFields, inputImage, dicomWrapper=None):
@@ -107,6 +123,19 @@ def saveDicom(inputFields, inputImage, dicomWrapper=None):
     dicom.PatientName = inputFields.patient_name
     dicom.PatientID = inputFields.patient_id
     dicom.StudyDate = getFormattedDate(inputFields.examination_date)
-    print(dicom.StudyDate)
+    dicom.ImageComments = inputFields.image_comments
+
+    dicom.save_as("test.dcm", write_like_original=False)
+
+
+def saveModifiedDicom(inputFields, dicomWrapper):
+    print("Saving dicom")
+    print("Input dicom found, importing data")
+    dicom = dicomWrapper.originalDicom
+
+    dicom.PatientName = inputFields.patient_name
+    dicom.PatientID = inputFields.patient_id
+    dicom.StudyDate = getFormattedDate(inputFields.examination_date)
+    dicom.ImageComments = inputFields.image_comments
 
     dicom.save_as("test.dcm", write_like_original=False)

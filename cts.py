@@ -28,17 +28,36 @@ class Sliders:
 class InputFields:
     def __init__(self, container, dicom=None):
         if dicom is not None:
-            self.patient_id = container.text_input("Patient's ID:", value=dicom.patient.id)
-            self.patient_name = container.text_input("Patient's name and surname:", value=dicom.patient.name)
-            self.examination_date = container.date_input("Examination date:", value=dicom.study_date)
+            if dicom.patient.id is not None:
+                self.patient_id = container.text_input("Patient's ID:", value=dicom.patient.id)
+            else:
+                self.patient_id = container.text_input("Patient's ID:")
+
+            if dicom.patient.name is not None:
+                self.patient_name = container.text_input("Patient's ID:", value=dicom.patient.name)
+            else:
+                self.patient_name = container.text_input("Patient's ID:")
+
+            if dicom.study_date is not None:
+                self.examination_date = container.date_input("Examination date:", value=dicom.study_date)
+            else:
+                self.examination_date = container.date_input("Examination date:")
+
+            if dicom.image_comments is not None:
+                self.image_comments = container.text_input("Comments:", value=dicom.image_comments)
+            else:
+                self.image_comments = container.text_input("Comments:")
+
         else:
             self.patient_id = container.text_input("Patient's ID:")
             self.patient_name = container.text_input("Patient's name and surname:")
             self.examination_date = container.date_input("Examination date:")
+            self.image_comments = container.text_input("Comments:")
 
 
 def handle_dicom_file(file, inputFieldsContainer):
     dicom = DicomUtils.DicomWrapper(file)
+    st.session_state.isDicom = True
     st.session_state.dicom = dicom
     st.session_state.image = dicom.image
     return InputFields(inputFieldsContainer, dicom)
@@ -46,6 +65,7 @@ def handle_dicom_file(file, inputFieldsContainer):
 
 def handle_image_file(inputFieldsContainer):
     st.session_state.image = Image.open(st.session_state.uploaded_file)
+    st.session_state.isDicom = False
     return InputFields(inputFieldsContainer)
 
 
@@ -113,13 +133,15 @@ if __name__ == '__main__':
                                                                                             sliders)
         st.session_state.dataToSave = True
 
-    if "dataToSave" in st.session_state and st.sidebar.button("Export DICOM"):
-        image = st.session_state.tomograph_image
-        if "dicom" in st.session_state:
-            DicomUtils.saveDicom(inputFields, image, st.session_state.dicom)
-            st.session_state.dicom = None
-        else:
-            DicomUtils.saveDicom(inputFields, image)
-            st.session_state.dicom = None
-
-
+    if ("dataToSave" in st.session_state or (
+            "isDicom" in st.session_state and st.session_state.isDicom is True)):
+        if st.sidebar.button("Export DICOM"):
+            if "dicom" in st.session_state and st.session_state.isDicom is True:
+                DicomUtils.saveModifiedDicom(inputFields, st.session_state.dicom)
+                st.session_state.dicom = None
+                del st.session_state.isDicom
+            else:
+                image = st.session_state.tomograph_image
+                DicomUtils.saveDicom(inputFields, image)
+                st.session_state.dicom = None
+                del st.session_state.isDicom
