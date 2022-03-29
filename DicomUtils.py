@@ -18,8 +18,9 @@ class DicomWrapper:
         self.originalDicom = ds
         self.image = self._extract_dicom_image(ds)
         self.patient = Patient(ds.PatientID, ds.PatientName)
-        date = ds.StudyDate
-        self.study_date = datetime.date(int(date[0:4]), int(date[4:6]), int(date[6:]))
+        if "StudyDate" in ds:
+            date = ds.StudyDate
+            self.study_date = datetime.date(int(date[0:4]), int(date[4:6]), int(date[6:]))
 
     def _extract_dicom_image(self, dicom_data):
         print("extracting dicom image")
