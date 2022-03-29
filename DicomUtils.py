@@ -4,6 +4,7 @@ import numpy as np
 import pydicom
 from pydicom import dcmread, Dataset, FileDataset
 from skimage import img_as_ubyte
+from skimage.exposure import rescale_intensity
 
 
 class Patient:
@@ -39,36 +40,33 @@ def createNewDicom(image_shape):
     metadata = createNewMetadata()
 
     ds = FileDataset(None, {}, preamble=b"\0" * 128)
+    set_required_params(ds, image_shape, metadata)
+
+    return ds
+
+
+def set_required_params(ds, image_shape, metadata):
     ds.file_meta = metadata
     ds.is_little_endian = True
-    ds.is_implicit_VR = False
-
+    ds.is_implicit_VR = True
     ds.SOPClassUID = pydicom._storage_sopclass_uids.CTImageStorage
     ds.SOPInstanceUID = metadata.MediaStorageSOPInstanceUID
-
     ds.Modality = "CT"
     ds.SeriesInstanceUID = pydicom.uid.generate_uid()
     ds.StudyInstanceUID = pydicom.uid.generate_uid()
     ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
-
     ds.BitsStored = 8
     ds.BitsAllocated = 8
     ds.SamplesPerPixel = 1
     ds.HighBit = 7
-
     ds.ImagesInAcquisition = 1
     ds.InstanceNumber = 1
-
     ds.Rows, ds.Columns, _ = image_shape
-
+    print(image_shape)
     ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
-
     ds.PhotometricInterpretation = "MONOCHROME2"
     ds.PixelRepresentation = 0
-
     pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
-
-    return ds
 
 
 def getFormattedDate(date):
@@ -84,14 +82,15 @@ def fill_zeros(date):
 
 
 def saveDicom(inputFields, inputImage, dicomWrapper=None):
-    image = img_as_ubyte(np.array(inputImage))
+    image = img_as_ubyte(rescale_intensity(np.array(inputImage), out_range=(0.0, 1.0)))
     print("Saving dicom")
     if dicomWrapper is None:
         print("No input dicom found, creating new")
         dicom = createNewDicom(image.shape)
     else:
+        print("Input dicom found, importing data")
         dicom = dicomWrapper.originalDicom
-        dicom.file_meta = createNewMetadata()
+        set_required_params(dicom, image.shape, createNewMetadata())
 
     dicom.PixelData = image.tobytes()
     dicom.PatientName = inputFields.patient_name

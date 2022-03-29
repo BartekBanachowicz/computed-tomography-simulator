@@ -120,3 +120,6 @@ if __name__ == '__main__':
             st.session_state.dicom = None
         else:
             DicomUtils.saveDicom(inputFields, image)
+            st.session_state.dicom = None
+
+
